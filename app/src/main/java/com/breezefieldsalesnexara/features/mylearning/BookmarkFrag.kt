@@ -1,0 +1,171 @@
+package com.breezefieldsalesnexara.features.mylearning
+
+import android.app.Dialog
+import android.content.Context
+import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
+import android.net.Uri
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
+import androidx.recyclerview.widget.RecyclerView
+import com.breezefieldsalesnexara.R
+import com.breezefieldsalesnexara.app.NetworkConstant
+import com.breezefieldsalesnexara.app.Pref
+import com.breezefieldsalesnexara.app.types.FragType
+import com.breezefieldsalesnexara.base.BaseResponse
+import com.breezefieldsalesnexara.base.presentation.BaseActivity
+import com.breezefieldsalesnexara.base.presentation.BaseFragment
+import com.breezefieldsalesnexara.features.dashboard.presentation.DashboardActivity
+import com.breezefieldsalesnexara.features.mylearning.apiCall.LMSRepoProvider
+import com.breezefieldsalesnexara.widgets.AppCustomTextView
+import com.google.android.exoplayer2.DefaultRenderersFactory
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.ui.StyledPlayerView
+import com.google.android.exoplayer2.upstream.DefaultDataSource
+import com.pnikosis.materialishprogress.ProgressWheel
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.schedulers.Schedulers
+
+class BookmarkFrag: BaseFragment()  {
+
+    private lateinit var mContext: Context
+    private lateinit var rvList:RecyclerView
+    private lateinit var adapterBookmarked:AdapterBookmarkedprivate
+
+    private lateinit var progress_wheel:ProgressWheel
+
+
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        mContext = context
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val view = inflater!!.inflate(R.layout.frag_bookmark, container, false)
+        initView(view)
+        requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        return view
+    }
+
+    private fun initView(view: View) {
+
+        rvList = view.findViewById(R.id.rv_frag_bookmark)
+        progress_wheel = view.findViewById(R.id.progress_wheel_bookmark)
+
+        progress_wheel.stopSpinning()
+        getBookmarked()
+    }
+
+    private fun getBookmarked(){
+        try {
+            progress_wheel.spin()
+            val repository = LMSRepoProvider.getTopicList()
+            BaseActivity.compositeDisposable.add(
+                repository.getBookmarkedApiCall(Pref.user_id.toString())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe({ result ->
+                        var response = result as BookmarkFetchResponse
+                        if (response.status == NetworkConstant.SUCCESS) {
+                            rvList.visibility = View.VISIBLE
+                            progress_wheel.stopSpinning()
+                            showData(response.bookmark_list)
+                        } else {
+                            rvList.visibility = View.GONE
+                            progress_wheel.stopSpinning()
+                        }
+                    }, { error ->
+                        error.printStackTrace()
+                        rvList.visibility = View.GONE
+                        progress_wheel.stopSpinning()
+                    })
+            )
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+            rvList.visibility = View.GONE
+            progress_wheel.stopSpinning()
+        }
+    }
+
+    fun showData(bookmark_list:ArrayList<VidBookmark>){
+        var filterL = bookmark_list.distinctBy { it.content_id.toString() }
+        adapterBookmarked = AdapterBookmarkedprivate(mContext,filterL as ArrayList<VidBookmark>,object :AdapterBookmarkedprivate.OnClick{
+            override fun onClick(obj: VidBookmark) {
+                BookmarkPlayFrag.play_url = obj.content_url
+                (mContext as DashboardActivity).loadFragment(FragType.BookmarkPlayFrag, true, "")
+            }
+
+            override fun onDelClick(obj: VidBookmark) {
+                obj.isBookmarked = "0"
+
+
+                val simpleDialog = Dialog(mContext)
+                simpleDialog.setCancelable(false)
+                simpleDialog.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                simpleDialog.setContentView(R.layout.dialog_yes_no)
+                val dialogHeader = simpleDialog.findViewById(R.id.dialog_cancel_order_header_TV) as AppCustomTextView
+                val dialog_yes_no_headerTV = simpleDialog.findViewById(R.id.dialog_yes_no_headerTV) as AppCustomTextView
+                //dialog_yes_no_headerTV.text = "Hi "+Pref.user_name?.substring(0, Pref.user_name?.indexOf(" ")!!)+"!"
+                dialog_yes_no_headerTV.text = "Hi "+Pref.user_name!!+"!"
+                dialogHeader.text = "Are you sure ?"
+                val dialogYes = simpleDialog.findViewById(R.id.tv_dialog_yes_no_yes) as AppCustomTextView
+                val dialogNo = simpleDialog.findViewById(R.id.tv_dialog_yes_no_no) as AppCustomTextView
+                dialogYes.setOnClickListener({ view ->
+                    simpleDialog.cancel()
+                    bookmarkDelApi(obj)
+                })
+                dialogNo.setOnClickListener({ view ->
+                    simpleDialog.cancel()
+                })
+                simpleDialog.show()
+
+
+            }
+        })
+        rvList.adapter = adapterBookmarked
+    }
+
+    private fun bookmarkDelApi(obj:VidBookmark){
+        var apiObj : BookmarkResponse = BookmarkResponse()
+        apiObj.user_id = Pref.user_id.toString()
+        apiObj.topic_id = obj.topic_id
+        apiObj.topic_name = obj.topic_name
+        apiObj.content_id = obj.content_id
+        apiObj.content_name = obj.content_name
+        apiObj.content_desc = obj.content_desc
+        apiObj.content_bitmap = obj.content_bitmap
+        apiObj.content_url = obj.content_url
+        apiObj.addBookmark = obj.isBookmarked
+
+        try {
+            val repository = LMSRepoProvider.getTopicList()
+            BaseActivity.compositeDisposable.add(
+                repository.bookmarkApiCall(apiObj)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe({ result ->
+                        var response = result as BaseResponse
+                        if (response.status == NetworkConstant.SUCCESS) {
+                            getBookmarked()
+                        } else {
+
+                        }
+                    }, { error ->
+                        error.printStackTrace()
+                    })
+            )
+        } catch (ex: Exception) {
+            ex.printStackTrace()
+        }
+    }
+
+
+}
