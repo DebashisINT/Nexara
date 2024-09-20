@@ -1,13 +1,15 @@
 package com.breezefieldsalesnexara.features.mylearning
 
-import android.animation.Animator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.app.DownloadManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
@@ -21,6 +23,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -28,6 +32,7 @@ import android.widget.PopupWindow
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.FileProvider
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -53,6 +58,7 @@ import java.io.File
 
 
 class VideoPlayLMS : BaseFragment() {
+    private lateinit var themedContext: ContextThemeWrapper
     private var content_comment_point: Int = 0
     private var content_share_point: Int = 0
     private var content_like_point: Int = 0
@@ -72,7 +78,12 @@ class VideoPlayLMS : BaseFragment() {
     private lateinit var ll_vdo_ply_like: LinearLayout
     private lateinit var iv_vdo_ply_like: ImageView
     private lateinit var iv_vdo_ply_bookmark: ImageView
+    private lateinit var tv_frag_vid_bookmark_text: TextView
     private lateinit var ll_frag_vid_bookmark: LinearLayout
+    private lateinit var ll_book: LinearLayout
+    private lateinit var ll_like: LinearLayout
+    private lateinit var ll_comment: LinearLayout
+    private lateinit var exo_fullscreen: ImageView
     private lateinit var lottie_bookmark: LottieAnimationView
     private lateinit var ll_vdo_ply_cmmnt: LinearLayout
     private lateinit var ll_vdo_ply_share: LinearLayout
@@ -153,18 +164,103 @@ class VideoPlayLMS : BaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        val view = inflater!!.inflate(R.layout.fragment_video_play_l_m_s, container, false)
+
+       /* val view = inflater!!.inflate(R.layout.fragment_video_play_l_m_s, container, false)
+        // Wrap the context with the desired theme (AppTheme)
+        themedContext = ContextThemeWrapper(requireContext(), R.style.AppTheme_NoStatusBar)
+
         initView(view)
+        // Handle orientation on fragment creation
+        //handleOrientationChange(resources.configuration.orientation)
         requireActivity().getWindow()
             .setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+        return view*/
+
+        // Check the orientation of the device
+        val orientation = resources.configuration.orientation
+
+        // Apply the 'NoStatusBar' theme when in landscape mode
+        val contextThemeWrapper: Context = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // Apply the custom theme for landscape mode (No StatusBar)
+            ContextThemeWrapper(requireContext(), R.style.AppTheme_NoStatusBar)
+        } else {
+            // Use the default theme for portrait mode
+            ContextThemeWrapper(requireContext(), R.style.AppTheme)
+        }
+
+        // Inflate the layout with the appropriate theme
+        val localInflater = inflater.cloneInContext(contextThemeWrapper)
+        val view = localInflater.inflate(R.layout.fragment_video_play_l_m_s, container, false)
+        initView(view)
         return view
     }
+
+    /*override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Check the orientation of the device
+        val orientation = resources.configuration.orientation
+
+        // Apply the 'NoStatusBar' theme when in landscape mode
+        val contextThemeWrapper: Context = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // Apply the custom theme for landscape mode (No StatusBar)
+            ContextThemeWrapper(activity, R.style.AppTheme_NoStatusBar)
+        } else {
+            // Use the default theme for portrait mode
+            ContextThemeWrapper(activity, R.style.AppTheme)
+        }
+
+        // Inflate the layout with the appropriate theme
+        val localInflater = inflater.cloneInContext(contextThemeWrapper)
+
+        // Inflate the view with the themed inflater
+        val view = localInflater.inflate(R.layout.fragment_video_play_l_m_s, container, false)
+
+        // Initialize views
+        initView(view)
+
+        // Handle orientation on fragment creation
+        handleOrientationChange(orientation)
+
+        // Set the soft input mode
+        requireActivity().window.setSoftInputMode(
+            WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or
+                    WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        )
+
+        return view
+    }*/
+
+
+    /*override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+
+        // Handle orientation changes when they happen
+        handleOrientationChange(newConfig.orientation)
+    }*/
+
+    /*private fun handleOrientationChange(orientation: Int) {
+        val orientation = resources.configuration.orientation
+
+        // Apply the 'NoStatusBar' theme when in landscape mode
+        val contextThemeWrapper: Context = if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // Apply the custom theme for landscape mode (No StatusBar)
+            ContextThemeWrapper(activity, R.style.AppTheme_NoStatusBar)
+        } else {
+            // Use the default theme for portrait mode
+            ContextThemeWrapper(activity, R.style.AppTheme)
+        }
+    }*/
+
 
     private fun initView(view: View) {
         progressWheel = view.findViewById(R.id.pb_frag_video_player)
         ll_vdo_ply_like = view.findViewById(R.id.ll_vdo_ply_like)
         iv_vdo_ply_like = view.findViewById(R.id.iv_vdo_ply_like)
         iv_vdo_ply_bookmark = view.findViewById(R.id.iv_vdo_ply_bookmark)
+        tv_frag_vid_bookmark_text = view.findViewById(R.id.tv_frag_vid_bookmark_text)
         ll_frag_vid_bookmark = view.findViewById(R.id.ll_frag_vid_bookmark)
         lottie_bookmark = view.findViewById(R.id.lottie_bookmark)
         ll_vdo_ply_cmmnt = view.findViewById(R.id.ll_vdo_ply_cmmnt)
@@ -175,6 +271,13 @@ class VideoPlayLMS : BaseFragment() {
         rvComments = view.findViewById(R.id.rv_frag_video_play_comment)
         et_frag_video_comment = view.findViewById(R.id.et_frag_video_comment)
         iv_frag_video_comment_save = view.findViewById(R.id.iv_frag_video_comment_save)
+        ll_book = view.findViewById(R.id.ll_book)
+        ll_like = view.findViewById(R.id.ll_like)
+        ll_comment = view.findViewById(R.id.ll_comment)
+        exo_fullscreen = view.findViewById(R.id.exo_fullscreen)
+
+        exo_fullscreen.setBackgroundResource(R.drawable.switch_to_full_screen_button);
+
         progressWheel.visibility = View.GONE
         ll_video_not_found.visibility = View.GONE
         ll_frag_video_play_comments.visibility = View.GONE
@@ -294,7 +397,8 @@ class VideoPlayLMS : BaseFragment() {
                                         ll_vdo_ply_cmmnt,
                                         ll_vdo_ply_share,
                                         iv_vdo_ply_like,
-                                        content_watch_point
+                                        content_watch_point,
+                                        exo_fullscreen,
                                     )
 
 
@@ -338,10 +442,11 @@ class VideoPlayLMS : BaseFragment() {
         ll_vdo_ply_share: LinearLayout,
         iv_vdo_ply_like: ImageView,
         content_watch_point: Int,
+        exo_fullscreen: ImageView
     ) {
         adapter = VideoAdapter(
             viewPager2,
-            mContext,
+            mContext/*themedContext*/,
             contentL,
             topic_id,
             topic_name,
@@ -351,6 +456,10 @@ class VideoPlayLMS : BaseFragment() {
             ll_vdo_ply_share,
             iv_vdo_ply_like,
             iv_vdo_ply_bookmark,
+            exo_fullscreen,
+/*
+            like_flag,
+*/
             object : VideoAdapter.OnVideoPreparedListener {
 
                 override fun onLikeClick(isLike:Boolean) {
@@ -374,6 +483,13 @@ class VideoPlayLMS : BaseFragment() {
                     obj.content_desc = currentVideoObj.content_description
                     obj.content_bitmap = currentVideoObj.content_thumbnail
                     obj.content_url = currentVideoObj.content_url
+                    try {
+                        if(currentVideoObj.isBookmarked == null){
+                            currentVideoObj.isBookmarked = "0"
+                        }
+                    } catch (e: Exception) {
+                        currentVideoObj.isBookmarked = "0"
+                    }
                     if(currentVideoObj.isBookmarked.equals("1")){
                         obj.isBookmarked = "0"
                         contentL.filter { it.content_id.toString().equals(currentVideoObj.content_id.toString()) }.first().isBookmarked = "0"
@@ -382,9 +498,16 @@ class VideoPlayLMS : BaseFragment() {
                         contentL.filter { it.content_id.toString().equals(currentVideoObj.content_id.toString()) }.first().isBookmarked = "1"
                     }
                     if (obj.isBookmarked.equals("1")) {
-                        iv_vdo_ply_bookmark.setImageResource(R.drawable.ic_bookmark_fill)
+                        ll_book.visibility =View.VISIBLE
+                        ll_book.setBackground(mContext.getResources().getDrawable(R.drawable.back_round_corner_lms_round_white));
+                        iv_vdo_ply_bookmark.setImageResource(R.drawable.bookmark_green)
+                        //iv_vdo_ply_bookmark.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
                     } else {
-                        iv_vdo_ply_bookmark.setImageResource(R.drawable.ic_bookmark)
+                        ll_book.visibility =View.VISIBLE
+                        ll_book.setBackground(mContext.getResources().getDrawable(R.drawable.back_round_corner_lms_round));
+                        iv_vdo_ply_bookmark.setImageResource(R.drawable.save_instagram)
+                       // iv_vdo_ply_bookmark.setColorFilter(ContextCompat.getColor(mContext, R.color.white), android.graphics.PorterDuff.Mode.MULTIPLY)
+
                     }
 
 
@@ -398,12 +521,19 @@ class VideoPlayLMS : BaseFragment() {
                             lottie_bookmark.setProgress(animation.animatedValue as Float)
                         }
                         animator.start()
+                        tv_frag_vid_bookmark_text.text = "Saved"
+                    }else{
+                        tv_frag_vid_bookmark_text.text = "Save"
                     }
                     Handler().postDelayed(Runnable {
                         lottie_bookmark.visibility = View.GONE
                     }, 1000)
 
 
+                }
+
+                override fun onEndofVidForCountUpdate() {
+                    contentCountSaveAPICalling()
                 }
 
                 override fun onVideoPrepared(exoPlayerItem: ExoPlayerItem) {
@@ -420,8 +550,40 @@ class VideoPlayLMS : BaseFragment() {
 
                     var filterResForCompleteStatus = response.content_list.filter { it.content_id.toInt() == obj.content_id }.first()
 
-                    if (filterResForCompleteStatus.content_watch_completed == false) {
+                    obj.like_flag = contentL.filter { it.content_id.toString().equals(obj.content_id.toString()) }.first().like_flag
+                    if(contentL.filter { it.content_id.toString().equals(obj.content_id.toString()) }.first().content_watch_completed){
+                        obj.content_watch_completed = true
+                        obj.Watch_Percentage = 100
+                    }
+
+
+                    obj.CompletionStatus = false
+                    obj.QuizScores = 0
+                    obj.comment_list = commentL.filter {
+                        it.content_id.toString().equals(obj.content_id.toString())
+                    } as ArrayList<CommentL>
+                    Obj_LMS_CONTENT_INFO = obj
+                    println("onContentInfoAPICallingComment" + commentL.filter {
+                        it.content_id.equals(
+                            obj.content_id
+                        )
+                    } as ArrayList<CommentL>)
+                    println("onContentInfoAPICalling" + obj.comment_list)
+                    println("onContentInfoAPICalling_obj" + obj)
+
+                    println(
+                        "tag_video_save_api contentID ${obj.content_id} ${
+                            commentL.filter {
+                                it.content_id.toString().equals(obj.content_id.toString())
+                            } as ArrayList<CommentL>
+                        }")
+                    obj.comment_list = ArrayList()
+                    saveContentWiseInfo(obj)
+
+                    /*if (filterResForCompleteStatus.content_watch_completed == true) {
                         obj.CompletionStatus = false
+                        obj.content_watch_completed = true
+                        obj.Watch_Percentage = 100
                         obj.QuizScores = 0
                         obj.comment_list = commentL.filter {
                             it.content_id.toString().equals(obj.content_id.toString())
@@ -433,7 +595,7 @@ class VideoPlayLMS : BaseFragment() {
                             )
                         } as ArrayList<CommentL>)
                         println("onContentInfoAPICalling" + obj.comment_list)
-                        println("onContentInfoAPICalling" + obj)
+                        println("onContentInfoAPICalling_obj" + obj)
 
                         println(
                             "tag_video_save_api contentID ${obj.content_id} ${
@@ -444,6 +606,57 @@ class VideoPlayLMS : BaseFragment() {
                         obj.comment_list = ArrayList()
                         saveContentWiseInfo(obj)
                     }
+                    else {
+                        if ( *//*!obj.content_length.equals("0") &&*//* obj.content_watch_length .equals("0") ||  obj.content_watch_length .equals("00:00:00")) {
+                            obj.CompletionStatus = false
+                            obj.like_flag = like_flag
+                            obj.QuizScores = 0
+                            obj.comment_list = commentL.filter {
+                                it.content_id.toString().equals(obj.content_id.toString())
+                            } as ArrayList<CommentL>
+                            Obj_LMS_CONTENT_INFO = obj
+                            println("onContentInfoAPICallingComment" + commentL.filter {
+                                it.content_id.equals(
+                                    obj.content_id
+                                )
+                            } as ArrayList<CommentL>)
+                            println("onContentInfoAPICalling" + obj.comment_list)
+                            println("onContentInfoAPICalling_obj" + obj)
+
+                            println(
+                                "tag_video_save_api contentID ${obj.content_id} ${
+                                    commentL.filter {
+                                        it.content_id.toString().equals(obj.content_id.toString())
+                                    } as ArrayList<CommentL>
+                                }")
+                            obj.comment_list = ArrayList()
+                            saveContentWiseInfo(obj)
+                        }
+                        else if (!obj.content_length.equals("0") && !obj.content_watch_length.equals("0")){
+                            obj.CompletionStatus = false
+                            obj.QuizScores = 0
+                            obj.comment_list = commentL.filter {
+                                it.content_id.toString().equals(obj.content_id.toString())
+                            } as ArrayList<CommentL>
+                            Obj_LMS_CONTENT_INFO = obj
+                            println("onContentInfoAPICallingComment" + commentL.filter {
+                                it.content_id.equals(
+                                    obj.content_id
+                                )
+                            } as ArrayList<CommentL>)
+                            println("onContentInfoAPICalling" + obj.comment_list)
+                            println("onContentInfoAPICalling_obj" + obj)
+
+                            println(
+                                "tag_video_save_api contentID ${obj.content_id} ${
+                                    commentL.filter {
+                                        it.content_id.toString().equals(obj.content_id.toString())
+                                    } as ArrayList<CommentL>
+                                }")
+                            obj.comment_list = ArrayList()
+                            saveContentWiseInfo(obj)
+                        }
+                    }*/
                 }
 
                 override fun onCommentCLick(obj: ContentL) {
@@ -459,6 +672,7 @@ class VideoPlayLMS : BaseFragment() {
                 override fun onQuestionAnswerSetPageLoad(obj: ArrayList<QuestionL>, position: Int) {
 
                     try {
+
                         println("tag_value_contentLSize"+contentL.size)
                         println("tag_value_position"+position)
 
@@ -564,10 +778,26 @@ class VideoPlayLMS : BaseFragment() {
                 println("Position CompanionValue:"+ contentL.get(position).content_watch_length)
 
                 try {
+                    if(currentVideoObj.isBookmarked == null){
+                        currentVideoObj.isBookmarked = "0"
+                    }
+                } catch (e: Exception) {
+                    currentVideoObj.isBookmarked = "0"
+                }
+
+                try {
                     if (currentVideoObj.isBookmarked.equals("1")) {
-                        iv_vdo_ply_bookmark.setImageResource(R.drawable.ic_bookmark_fill)
+                        ll_book.visibility = View.VISIBLE
+                        ll_book.setBackground(mContext.getResources().getDrawable(R.drawable.back_round_corner_lms_round_white));
+                        iv_vdo_ply_bookmark.setImageResource(R.drawable.bookmark_green)
+                        //iv_vdo_ply_bookmark.setColorFilter(ContextCompat.getColor(mContext, R.color.approved_green), android.graphics.PorterDuff.Mode.MULTIPLY)
+                        tv_frag_vid_bookmark_text.text = "Saved"
                     } else {
-                        iv_vdo_ply_bookmark.setImageResource(R.drawable.ic_bookmark)
+                        ll_book.visibility = View.VISIBLE
+                        ll_book.setBackground(mContext.getResources().getDrawable(R.drawable.back_round_corner_lms_round));
+                        iv_vdo_ply_bookmark.setImageResource(R.drawable.save_instagram)
+                        //iv_vdo_ply_bookmark.setColorFilter(ContextCompat.getColor(mContext, R.color.white), android.graphics.PorterDuff.Mode.MULTIPLY)
+                        tv_frag_vid_bookmark_text.text = "Save"
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -579,8 +809,10 @@ class VideoPlayLMS : BaseFragment() {
                     ll_vdo_ply_like.visibility = View.GONE
                 }
                 if (contentL.get(position).isAllowComment) {
+                    ll_comment.visibility =View.VISIBLE
                     ll_vdo_ply_cmmnt.visibility = View.VISIBLE
                 } else {
+                    ll_comment.visibility =View.INVISIBLE
                     ll_vdo_ply_cmmnt.visibility = View.GONE
                 }
                /* if (contentL.get(position).isAllowShare) {
@@ -591,19 +823,56 @@ class VideoPlayLMS : BaseFragment() {
 
                 ll_vdo_ply_like.setOnClickListener {
                     if (like_flag) {
+                        ll_like.visibility = View.VISIBLE
+                        ll_like.setBackground(mContext.getResources().getDrawable(R.drawable.back_round_corner_lms_round))
                         iv_vdo_ply_like.setImageResource(R.drawable.like_white)
                         like_flag = false
                         contentL.get(position).isLiked = false
                         contentL.filter { it.content_id.equals(currentVideoObj.content_id) }.first()./*isLiked*/ like_flag = false
                     } else {
+                        ll_like.visibility = View.VISIBLE
                         like_flag = true
+                        ll_like.setBackground(mContext.getResources().getDrawable(R.drawable.back_round_corner_lms_round_white))
                         iv_vdo_ply_like.setImageResource(R.drawable.heart_red)
                         contentL.get(position).isLiked = true
                         contentL.filter { it.content_id.equals(currentVideoObj.content_id) }.first()./*isLiked*/ like_flag = true
                         showLikePointPopup(content_like_point)
-
+                        Pref.like_count = (Pref.like_count + 1)
+                        contentCountSaveAPICalling()
                     }
 
+                    contentL.filter { it.content_id.toString().equals(Pref.LastVideoPlay_ContentID.toString()) }.first().like_flag = like_flag
+
+                    var obj: LMS_CONTENT_INFO = LMS_CONTENT_INFO()
+                    obj.user_id = Pref.user_id.toString()
+                    obj.topic_id = Pref.LastVideoPlay_TopicID.toInt()
+                    obj.topic_name = Pref.LastVideoPlay_TopicName
+                    obj.content_id = Pref.LastVideoPlay_ContentID.toInt()
+                    obj.like_flag = like_flag
+                    obj.share_count = 0
+                    obj.no_of_comment = 0
+                    obj.content_length = Obj_LMS_CONTENT_INFO.content_length//"00:00:01"
+                    obj.content_watch_length = Obj_LMS_CONTENT_INFO.content_watch_length//"00:00:01"
+                    obj.content_watch_start_date = AppUtils.getCurrentDateyymmdd()
+                    obj.content_watch_end_date = AppUtils.getCurrentDateyymmdd()
+                    obj.content_watch_completed = Obj_LMS_CONTENT_INFO.content_watch_completed//false
+                    obj.content_last_view_date_time = AppUtils.getCurrentDateTimeNew()
+                    obj.WatchStartTime = Obj_LMS_CONTENT_INFO.WatchStartTime//"00:00:00"
+                    obj.WatchEndTime = Obj_LMS_CONTENT_INFO.WatchEndTime//"00:00:00"
+                    obj.WatchedDuration = Obj_LMS_CONTENT_INFO.WatchedDuration//"00:00:00"
+                    obj.Timestamp = AppUtils.getCurrentDateTimeNew()
+                    obj.DeviceType = "Mobile"
+                    obj.Operating_System = "Android"
+                    obj.Location = LocationWizard.getNewLocationName(mContext, Pref.current_latitude.toDouble(), Pref.current_longitude.toDouble())
+                    obj.PlaybackSpeed = LocationWizard.getNewLocationName(mContext, Pref.current_latitude.toDouble(), Pref.current_longitude.toDouble())
+                    obj.Watch_Percentage = Obj_LMS_CONTENT_INFO.Watch_Percentage
+                    obj.QuizAttemptsNo = 0
+                    obj.QuizScores = 0
+                    obj.CompletionStatus = false
+                    val comment_listL: ArrayList<CommentL> = ArrayList()
+                    obj.comment_list = comment_listL
+
+                    saveContentWiseInfo(obj)
                 }
 
 
@@ -612,11 +881,15 @@ class VideoPlayLMS : BaseFragment() {
                 try {
                     if(contentL.get(position)./*isLiked*/ like_flag == true){
                         like_flag = true
-                        Pref.like_count = (Pref.like_count + 1)
+
+                        ll_like.visibility = View.VISIBLE
+                        ll_like.setBackground(mContext.getResources().getDrawable(R.drawable.back_round_corner_lms_round_white))
                         iv_vdo_ply_like.setImageResource(R.drawable.heart_red)
                     }else{
                        // Pref.like_count = (Pref.like_count -1)
+                        ll_like.visibility = View.VISIBLE
                         like_flag = false
+                        ll_like.setBackground(mContext.getResources().getDrawable(R.drawable.back_round_corner_lms_round))
                         iv_vdo_ply_like.setImageResource(R.drawable.like_white)
                     }
                 } catch (e: Exception) {
@@ -720,7 +993,7 @@ class VideoPlayLMS : BaseFragment() {
         // popup_title.setText("Congratulation"/*+Pref.user_name*/)
         var typeFace: Typeface? = ResourcesCompat.getFont(mContext, R.font.remachinescript_personal_use)
         // popup_title.setTypeface(typeFace)
-        popup_message.setText("You got $content_watch_point points")
+        popup_message.setText("+$content_watch_point")
 
         // close_button.setOnClickListener {
 
@@ -756,10 +1029,17 @@ class VideoPlayLMS : BaseFragment() {
         //popup_title.setText("Congratulation"/*+Pref.user_name*/)
         var typeFace: Typeface? = ResourcesCompat.getFont(mContext, R.font.remachinescript_personal_use)
         //popup_title.setTypeface(typeFace)
-        popup_message.setText("You got $content_like_point points")
+        popup_message.setText("+$content_like_point")
         /*close_button.setOnClickListener {
             popupWindow.dismiss()
         }*/
+
+        println("tag_animate anim")
+        val a: Animation = AnimationUtils.loadAnimation(mContext, com.breezefieldsalesnexara.R.anim.scale)
+        a.reset()
+        popup_message.clearAnimation()
+        popup_message.startAnimation(a)
+
         popup_image.visibility =View.VISIBLE
         popupWindow.setBackgroundDrawable(ColorDrawable())
         popupWindow.isOutsideTouchable = false
@@ -768,7 +1048,7 @@ class VideoPlayLMS : BaseFragment() {
 
         Handler().postDelayed(Runnable {
             popupWindow.dismiss()
-        }, 1300)
+        }, 1700)
 
     }
 
@@ -878,6 +1158,8 @@ class VideoPlayLMS : BaseFragment() {
 
             player.playWhenReady = false
             player.stop()
+            //StyledPlayerView.switchTargetView(player, itemView.stylplayerView, itemView.stylplayerView)
+            (context as Activity).requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         }
     }
 
@@ -902,7 +1184,7 @@ class VideoPlayLMS : BaseFragment() {
                 player.clearMediaItems()
             }
         }
-
+       // (this as Activity).requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         requireActivity().unregisterReceiver(screenOffReceiver)
     }
 
@@ -1012,6 +1294,7 @@ class VideoPlayLMS : BaseFragment() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        contentCountSaveAPICalling()
     }
 
     private fun saveContentWiseInfoFOrComment(obj: LMS_CONTENT_INFO) {
@@ -1065,10 +1348,17 @@ class VideoPlayLMS : BaseFragment() {
         //popup_title.setText("Congratulation"/*+Pref.user_name*/)
         var typeFace: Typeface? = ResourcesCompat.getFont(mContext, R.font.remachinescript_personal_use)
         //popup_title.setTypeface(typeFace)
-        popup_message.setText("You got $content_comment_point points")
+        popup_message.setText("+$content_comment_point")
         /*close_button.setOnClickListener {
             popupWindow.dismiss()
         }*/
+
+        println("tag_animate anim")
+        val a: Animation = AnimationUtils.loadAnimation(mContext, com.breezefieldsalesnexara.R.anim.scale)
+        a.reset()
+        popup_message.clearAnimation()
+        popup_message.startAnimation(a)
+
         popup_image.visibility =View.VISIBLE
         popupWindow.setBackgroundDrawable(ColorDrawable())
         popupWindow.isOutsideTouchable = false
@@ -1077,7 +1367,7 @@ class VideoPlayLMS : BaseFragment() {
 
         Handler().postDelayed(Runnable {
             popupWindow.dismiss()
-        }, 1300)
+        }, 1500)
 
     }
 
@@ -1182,7 +1472,11 @@ class VideoPlayLMS : BaseFragment() {
                     .subscribe({ result ->
                         var response = result as BaseResponse
                         if (response.status == NetworkConstant.SUCCESS) {
-
+                            try {
+                                (mContext as DashboardActivity).updateBookmarkCnt()
+                            } catch (e: Exception) {
+                                Pref.CurrentBookmarkCount = 0
+                            }
                         } else {
 
                         }
@@ -1239,5 +1533,56 @@ class VideoPlayLMS : BaseFragment() {
         catch (ex: Exception) {
             ex.printStackTrace()
         }
+    }
+
+    private fun contentCountSaveAPICalling() {
+
+        try {
+            Timber.d("contentCountSaveAPICalling call" + AppUtils.getCurrentDateTime())
+
+            var obj = ContentCountSave_Data()
+            obj.user_id = Pref.user_id.toString()
+            obj.save_date = AppUtils.getCurrentDateyymmdd()
+            obj.like_count = Pref.like_count
+            obj.comment_count = Pref.comment_count
+            obj.share_count = Pref.share_count
+            obj.correct_answer_count = Pref.correct_answer_count
+            obj.wrong_answer_count = Pref.wrong_answer_count
+            obj.content_watch_count = Pref.content_watch_count
+            println("tag_count_api call for $obj")
+            val repository = LMSRepoProvider.getTopicList()
+            BaseActivity.compositeDisposable.add(
+                repository.saveContentCount(obj)
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeOn(Schedulers.io())
+                    .subscribe({ result ->
+                        val response = result as BaseResponse
+                        println("tag_count_api response ${response.status}")
+                        if (response.status == NetworkConstant.SUCCESS) {
+                            try {
+                                Pref.like_count = 0
+                                Pref.comment_count = 0
+                                Pref.share_count = 0
+                                Pref.correct_answer_count = 0
+                                Pref.wrong_answer_count = 0
+                                Pref.content_watch_count = 0
+                            }catch (ex:Exception){
+                                ex.printStackTrace()
+                            }
+                        }else{
+                            (mContext as DashboardActivity).showSnackMessage(getString(R.string.no_data_found))
+                        }
+                    }, { error ->
+                        println("tag_count_api response error")
+                        (mContext as DashboardActivity).showSnackMessage(getString(R.string.something_went_wrong))
+                    })
+            )
+        }
+        catch (ex: Exception) {
+            ex.printStackTrace()
+            println("tag_count_api response error")
+            (mContext as DashboardActivity).showSnackMessage(getString(R.string.something_went_wrong))
+        }
+
     }
 }

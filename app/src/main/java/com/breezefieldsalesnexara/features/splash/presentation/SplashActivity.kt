@@ -648,7 +648,8 @@ class SplashActivity : BaseActivity(), GpsStatusDetector.GpsStatusDetectorCallBa
     }*/
 
     private fun goToNextScreen() {
-        if(Pref.IsAllowGPSTrackingInBackgroundForLMS == false){
+
+        if(Pref.IsAllowGPSTrackingInBackgroundForLMS){
             addAutoStartup()
         }else{
             goTONextActi()

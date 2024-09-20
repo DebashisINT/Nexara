@@ -1096,6 +1096,7 @@ object Pref : PreferenceHolder() {
 
     var IsAllowGPSTrackingInBackgroundForLMS: Boolean by bindToPreferenceField(true, "IsAllowGPSTrackingInBackgroundForLMS")
 
+    var CurrentBookmarkCount: Int by bindToPreferenceField(0, "CurrentBookmarkCount")
 }
 
 

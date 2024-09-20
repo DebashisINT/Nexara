@@ -59,10 +59,17 @@ class MyLearningProgressAdapter(
 
             try {
                 if (item.question_list.size>0) {
-                    itemView.tv_progressText.visibility =View.VISIBLE
+
+                    if (item.Watch_Percentage.toInt() == 100){
+                        itemView.tv_progressText.visibility =View.VISIBLE
+                        itemView.tv_quiztatus.visibility =View.VISIBLE
+                    }else{
+                        itemView.tv_progressText.visibility =View.GONE
+                        itemView.tv_quiztatus.visibility =View.GONE
+                    }
                     if (item.CompletionStatus == true) {
                         itemView.tv_progressText.setImageResource(R.drawable.quiz_done)
-                        itemView.tv_quiztatus.text = " Quiz Done "
+                        itemView.tv_quiztatus.text = " Quiz Done"
 
                        // itemView.tv_progressText.text = "Completed"
                        // itemView.tv_progressText.setTextColor(mContext.resources.getColor(R.color.approved_green))

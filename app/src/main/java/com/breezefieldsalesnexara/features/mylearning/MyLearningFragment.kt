@@ -1,11 +1,16 @@
 package com.breezefieldsalesnexara.features.mylearning
+
+import android.app.Activity
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.View.OnClickListener
 import android.view.ViewGroup
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -24,8 +29,6 @@ import com.breezefieldsalesnexara.base.BaseResponse
 import com.breezefieldsalesnexara.base.presentation.BaseActivity
 import com.breezefieldsalesnexara.base.presentation.BaseFragment
 import com.breezefieldsalesnexara.features.dashboard.presentation.DashboardActivity
-import com.breezefieldsalesnexara.features.mylearning.SearchLmsLearningFrag.Companion.topic_id
-import com.breezefieldsalesnexara.features.mylearning.SearchLmsLearningFrag.Companion.topic_name
 import com.breezefieldsalesnexara.features.mylearning.apiCall.LMSRepoProvider
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
@@ -34,10 +37,13 @@ import com.google.android.material.progressindicator.LinearProgressIndicator
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+
+
 class MyLearningFragment : BaseFragment(),OnClickListener {
     private lateinit var mContext: Context
     private lateinit var bottomNavigation: MeowBottomNavigation
-    private lateinit var cv_lms_learner_space: CardView
+    private lateinit var cv_lms_learner_space: LinearLayout
+    private lateinit var ll_lms_dash_performance_ins: LinearLayout
     private lateinit var cv_lms_leaderboard: CardView
     private lateinit var ll_knowledgeHub: LinearLayout
     private lateinit var ll_myLearning: LinearLayout
@@ -87,6 +93,7 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
     ): View? {
         super.onCreateView(inflater, container, savedInstanceState)
         val view = inflater!!.inflate(R.layout.fragment_my_learning, container, false)
+        //(context as Activity).requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         initView(view)
        /* requireActivity().getOnBackPressedDispatcher()
             .addCallback(object : OnBackPressedCallback(true) {
@@ -99,6 +106,7 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
     }
 
     private fun initView(view: View) {
+
         //performance
         ll_lms_performance = view.findViewById(R.id.ll_lms_performance)
         iv_lms_performance = view.findViewById(R.id.iv_lms_performance)
@@ -121,21 +129,22 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
       //  sc_vw = view.findViewById(R.id.sc_vw)
 
         iv_lms_leaderboard.setImageResource(R.drawable.leaderboard_new)
-        iv_lms_performance.setImageResource(R.drawable.performance_black)
-        iv_lms_mylearning.setImageResource(R.drawable.my_learning_black)
-        iv_lms_knowledgehub.setImageResource(R.drawable.all_topic_black)
+        iv_lms_performance.setImageResource(R.drawable.performance_insights)
+        iv_lms_mylearning.setImageResource(R.drawable.my_topics_selected)
+        iv_lms_knowledgehub.setImageResource(R.drawable.set_of_books_lms)
 
-        iv_lms_leaderboard.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
-        iv_lms_performance.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
-        iv_lms_mylearning.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
-        iv_lms_knowledgehub.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_leaderboard.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_performance.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_mylearning.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_knowledgehub.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
 
         tv_lms_performance.setTextColor(getResources().getColor(R.color.black))
-        tv_lms_mylearning.setTextColor(getResources().getColor(R.color.black))
+        tv_lms_mylearning.setTextColor(getResources().getColor(R.color.toolbar_lms))
         tv_lms_leaderboard.setTextColor(getResources().getColor(R.color.black))
         tv_lms_knowledgehub.setTextColor(getResources().getColor(R.color.black))
 
         cv_lms_learner_space = view.findViewById(R.id.cv_lms_learner_space)
+        ll_lms_dash_performance_ins = view.findViewById(R.id.ll_lms_dash_performance_ins)
         ll_knowledgeHub = view.findViewById(R.id.ll_frag_search_knowledge_hub_root)
         ll_myLearning = view.findViewById(R.id.ll_frag_search_mylearning_root)
         cv_frag_search_mylearning_root = view.findViewById(R.id.cv_frag_search_mylearning_root)
@@ -213,6 +222,10 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
             setHomeClickFalse()
             (mContext as DashboardActivity).loadFragment(FragType.SearchLmsFrag, true, "")
         }
+        ll_lms_dash_performance_ins.setOnClickListener {
+            setHomeClickFalse()
+            (mContext as DashboardActivity).loadFragment(FragType.PerformanceInsightPage, true, "")
+        }
 
         ll_knowledgeHub.setOnClickListener(this)
         cv_lms_leaderboard.setOnClickListener(this)
@@ -280,6 +293,12 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+
+        try {
+            (mContext as DashboardActivity).updateBookmarkCnt()
+        } catch (e: Exception) {
+            Pref.CurrentBookmarkCount = 0
+        }
     }
 
     private fun contentCountSaveAPICalling() {
@@ -311,6 +330,7 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
                                 Pref.share_count = 0
                                 Pref.correct_answer_count = 0
                                 Pref.wrong_answer_count = 0
+                                Pref.content_watch_count = 0
                             }catch (ex:Exception){
                                 ex.printStackTrace()
                             }
@@ -353,7 +373,8 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
                                    // }
                                 }
                             }
-                            tv_content.setText(courseList.size.toString()+" Topics")
+                            //tv_content.setText(courseList.size.toString()+" Topics")
+                            tv_content.setText(courseList.size.toString())
                             //tv_content_learning.setText(courseListLearning.size.toString()+" Topics")
 
                            /* val fullText = tv_content.text.toString()
@@ -426,6 +447,7 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
                             }
                             //tv_content.setText(courseList.size.toString()+" Topics")
                             tv_content_learning.setText(courseListLearning.size.toString()+" Topics")
+                            CustomStatic.MyLearningTopicCount = courseListLearning.size
 
                             /* val fullText = tv_content.text.toString()
                              val parts = fullText.split("\n")
@@ -529,7 +551,8 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
                                     )
                                 }
                             }
-                           tv_content_knowledge.setText(courseList.size.toString()+" Topics"/*+"\nContents"*/)
+                           //tv_content_knowledge.setText(courseList.size.toString()+" Topics"/*+"\nContents"*/)
+                           tv_content_knowledge.setText(courseList.size.toString()/*+"\nContents"*/)
                             /*val fullText2 = tv_content_knowledge.text.toString()
                            val parts2 = fullText2.split("\n")
 
@@ -593,7 +616,7 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
 
             ll_lms_mylearning.id -> {
                 setHomeClickFalse()
-                (mContext as DashboardActivity).loadFragment(FragType.MyLearningTopicList, true, "")
+                (mContext as DashboardActivity).loadFragment(FragType.SearchLmsFrag, true, "")
             }
 
             ll_lms_leaderboard.id -> {
@@ -607,7 +630,7 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
             }
             ll_lms_performance.id -> {
                 setHomeClickFalse()
-                (mContext as DashboardActivity).loadFragment(FragType.MyPerformanceFrag, true, "")
+                (mContext as DashboardActivity).loadFragment(FragType.PerformanceInsightPage, true, "")
 
             }
             cv_frag_search_mylearning_root.id -> {
@@ -715,5 +738,6 @@ class MyLearningFragment : BaseFragment(),OnClickListener {
     fun setHomeClickFalse(){
         CustomStatic.IsHomeClick = false
     }
+
 
 }

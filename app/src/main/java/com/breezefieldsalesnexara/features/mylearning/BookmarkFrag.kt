@@ -1,7 +1,9 @@
 package com.breezefieldsalesnexara.features.mylearning
 
+import android.app.Activity
 import android.app.Dialog
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
@@ -10,10 +12,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.breezefieldsalesnexara.R
+import com.breezefieldsalesnexara.app.AppDatabase
 import com.breezefieldsalesnexara.app.NetworkConstant
 import com.breezefieldsalesnexara.app.Pref
+import com.breezefieldsalesnexara.app.domain.AddShopDBModelEntity
 import com.breezefieldsalesnexara.app.types.FragType
 import com.breezefieldsalesnexara.base.BaseResponse
 import com.breezefieldsalesnexara.base.presentation.BaseActivity
@@ -35,8 +40,10 @@ import io.reactivex.schedulers.Schedulers
 
 class BookmarkFrag: BaseFragment()  {
 
+    private lateinit var response: BookmarkFetchResponse
     private lateinit var mContext: Context
     private lateinit var rvList:RecyclerView
+    private lateinit var iv_no_data:ImageView
     private lateinit var adapterBookmarked:AdapterBookmarkedprivate
 
     private lateinit var progress_wheel:ProgressWheel
@@ -50,6 +57,7 @@ class BookmarkFrag: BaseFragment()  {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater!!.inflate(R.layout.frag_bookmark, container, false)
+        (mContext as Activity).requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         initView(view)
         requireActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE or WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
         return view
@@ -59,6 +67,7 @@ class BookmarkFrag: BaseFragment()  {
 
         rvList = view.findViewById(R.id.rv_frag_bookmark)
         progress_wheel = view.findViewById(R.id.progress_wheel_bookmark)
+        iv_no_data = view.findViewById(R.id.iv_no_data)
 
         progress_wheel.stopSpinning()
         getBookmarked()
@@ -73,24 +82,43 @@ class BookmarkFrag: BaseFragment()  {
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribeOn(Schedulers.io())
                     .subscribe({ result ->
-                        var response = result as BookmarkFetchResponse
+                        response = result as BookmarkFetchResponse
                         if (response.status == NetworkConstant.SUCCESS) {
                             rvList.visibility = View.VISIBLE
+                            iv_no_data.visibility = View.GONE
                             progress_wheel.stopSpinning()
+                            (mContext as DashboardActivity).setTopBarTitle("Saved Contents : (${response.bookmark_list.size})")
                             showData(response.bookmark_list)
+
+                            try {
+                                (mContext as DashboardActivity).updateBookmarkCnt()
+                            } catch (e: Exception) {
+                                Pref.CurrentBookmarkCount = 0
+                            }
                         } else {
                             rvList.visibility = View.GONE
+                            iv_no_data.visibility = View.VISIBLE
                             progress_wheel.stopSpinning()
+                            try {
+                                (mContext as DashboardActivity).updateBookmarkCnt()
+                            } catch (e: Exception) {
+                                Pref.CurrentBookmarkCount = 0
+                            }
+
+                            (mContext as DashboardActivity).setTopBarTitle("Saved Contents")
+
                         }
                     }, { error ->
                         error.printStackTrace()
                         rvList.visibility = View.GONE
+                        iv_no_data.visibility = View.GONE
                         progress_wheel.stopSpinning()
                     })
             )
         } catch (ex: Exception) {
             ex.printStackTrace()
             rvList.visibility = View.GONE
+            iv_no_data.visibility = View.GONE
             progress_wheel.stopSpinning()
         }
     }
@@ -105,9 +133,9 @@ class BookmarkFrag: BaseFragment()  {
 
             override fun onDelClick(obj: VidBookmark) {
                 obj.isBookmarked = "0"
+                bookmarkDelApi(obj)
 
-
-                val simpleDialog = Dialog(mContext)
+                /*val simpleDialog = Dialog(mContext)
                 simpleDialog.setCancelable(false)
                 simpleDialog.getWindow()!!.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
                 simpleDialog.setContentView(R.layout.dialog_yes_no)
@@ -125,7 +153,7 @@ class BookmarkFrag: BaseFragment()  {
                 dialogNo.setOnClickListener({ view ->
                     simpleDialog.cancel()
                 })
-                simpleDialog.show()
+                simpleDialog.show()*/
 
 
             }
@@ -167,5 +195,21 @@ class BookmarkFrag: BaseFragment()  {
         }
     }
 
+    fun updateToolbar() {
+        super.onResume()
+        try {
+            (mContext as DashboardActivity).setTopBarTitle("Saved Contents : (${response.bookmark_list.size})")
 
+        }catch (ex:Exception){
+            ex.printStackTrace()
+            (mContext as DashboardActivity).setTopBarTitle("Saved Contents")
+
+        }
+
+        try {
+            (mContext as DashboardActivity).updateBookmarkCnt()
+        } catch (e: Exception) {
+            Pref.CurrentBookmarkCount = 0
+        }
+    }
 }

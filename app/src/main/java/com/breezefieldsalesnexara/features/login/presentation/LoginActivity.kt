@@ -303,7 +303,7 @@ class LoginActivity : BaseActivity(), View.OnClickListener, LocationListener {
 
         Pref.FirstLogiForTheDayTag = true
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Pref.IsAllowGPSTrackingInBackgroundForLMS == false){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Pref.IsAllowGPSTrackingInBackgroundForLMS){
             //initPermissionCheck()
             showCallLogProminentDisclosure()
         }
@@ -5226,8 +5226,10 @@ class LoginActivity : BaseActivity(), View.OnClickListener, LocationListener {
 //                                    openDialogPopupIMEI("Hi! $realName ($username)","Current Login ID has already been used from another mobile device. You are not allowed to " +
 //                                            "login from your current device due to IMEI BLOCKED! Please talk to Admin.")
 
-                                    openDialogPopupIMEI("Hi! $realName ($username)","The Current Device is already in use by another User ($realName). You are not allowed to " +
-                                            "login from your current device due to IMEI BLOCKED! Please talk to Admin.")
+                                    /*openDialogPopupIMEI("Hi! $realName ($username)","The Current Device is already in use by another User ($realName). You are not allowed to " +
+                                            "login from your current device due to IMEI BLOCKED! Please talk to Admin.")*/
+
+                                    openDialogPopupIMEI("Hi! $realName ($username)","This device is currently in use by another user.IMEI is blocked. Please reach out to the admin for assistance.")
                                 }else{
                                     openDialogPopup(loginResponse.message!!)
                                 }

@@ -100,4 +100,6 @@ public class CustomStatic {
 
    // public static Boolean IsLMSLeaderboardClick = false;
 
+    public static Integer MyLearningTopicCount = 0;
+
 }

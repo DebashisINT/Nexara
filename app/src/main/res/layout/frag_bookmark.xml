@@ -25,6 +25,14 @@
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
 
+            <ImageView
+                android:id="@+id/iv_no_data"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:src="@drawable/no_saved_content_full" />
+
             <com.pnikosis.materialishprogress.ProgressWheel
                 android:id="@+id/progress_wheel_bookmark"
                 android:layout_width="80dp"

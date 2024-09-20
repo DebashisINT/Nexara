@@ -2,8 +2,10 @@ package com.breezefieldsalesnexara.features.mylearning
 
 import android.animation.Animator
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
 import android.net.Uri
@@ -15,11 +17,15 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowManager
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.PopupWindow
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
@@ -28,6 +34,8 @@ import com.breezefieldsalesnexara.CustomStatic
 import com.breezefieldsalesnexara.R
 import com.breezefieldsalesnexara.app.Pref
 import com.breezefieldsalesnexara.app.utils.AppUtils
+import com.breezefieldsalesnexara.app.utils.Toaster
+import com.breezefieldsalesnexara.features.dashboard.presentation.DashboardActivity
 import com.breezefieldsalesnexara.features.location.LocationWizard
 import com.google.android.exoplayer2.DefaultRenderersFactory
 import com.google.android.exoplayer2.ExoPlayer
@@ -36,7 +44,9 @@ import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultDataSource
+import com.google.android.exoplayer2.video.VideoSize
 import kotlinx.android.synthetic.main.list_video.view.iv_list_video
 import kotlinx.android.synthetic.main.list_video.view.progress_wheel
 import kotlinx.android.synthetic.main.list_video.view.stylplayerView
@@ -51,6 +61,7 @@ import java.util.Locale
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 
+
 class VideoAdapter(var viewPager2: ViewPager2,
                    var context: Context,
                    var videos: ArrayList<ContentL>,
@@ -62,13 +73,15 @@ class VideoAdapter(var viewPager2: ViewPager2,
                    var ll_vdo_ply_share: LinearLayout,
                    var iv_vdo_ply_like: ImageView,
                    var iv_vdo_ply_bookmark: ImageView,
+                   var exo_fullscreen: ImageView,
+                   /*var like_flag: Boolean,*/
                    var videoPreparedListener: VideoAdapter.OnVideoPreparedListener,
                    var lastVideoCompleteListener: OnLastVideoCompleteListener,
                    var content_watch_point: Int) :
     RecyclerView.Adapter<VideoAdapter.VideoViewHolder>() {
 
     companion object {
-
+        private var is_portraitTouched: Boolean = false
     }
 
 
@@ -105,7 +118,6 @@ class VideoAdapter(var viewPager2: ViewPager2,
 
     private var onVideoPlaybackStateChangedListener: OnVideoPlaybackStateChangedListener? = null
 
-
     inner class VideoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         lateinit var exoPlayer: ExoPlayer
@@ -115,15 +127,19 @@ class VideoAdapter(var viewPager2: ViewPager2,
         var seek_dragging = false
         private val savedContentIds = mutableSetOf<Int>()
 
-        fun bindItems(
-            holder: VideoViewHolder,
-            context: Context,
-            videos_: ArrayList<ContentL>,
-            listner: OnVideoPreparedListener
-        ){
+        fun bindItems(holder: VideoViewHolder, context: Context, videos_: ArrayList<ContentL>, listner: OnVideoPreparedListener) {
 
-            if (videos_.get(absoluteAdapterPosition).content_url.contains(".mp4", ignoreCase = true)) {
-                setVideoPath(holder,videos_.get(absoluteAdapterPosition).content_url, absoluteAdapterPosition ,listner)
+            if (videos_.get(absoluteAdapterPosition).content_url.contains(
+                    ".mp4",
+                    ignoreCase = true
+                )
+            ) {
+                setVideoPath(
+                    holder,
+                    videos_.get(absoluteAdapterPosition).content_url,
+                    absoluteAdapterPosition,
+                    listner
+                )
                 if (videos_.get(absoluteAdapterPosition).content_url.contains("http")) {
                     setVideoPath(
                         holder,
@@ -147,17 +163,17 @@ class VideoAdapter(var viewPager2: ViewPager2,
             itemView.tvTitle.text = model.content_title
             itemView.tvDescrip.text = model.content_description
 
-            println("video_adapter like_flag"+videos.get(position).like_flag)
-            println("video_adapter isLiked"+videos.get(position).isLiked)
+            println("video_adapter like_flag" + videos.get(position).like_flag)
+            println("video_adapter isLiked" + videos.get(position).isLiked)
 
-            if (model.content_watch_length!="" && model.content_watch_completed==false) {
+            if (model.content_watch_length != "" && model.content_watch_completed == false) {
 
                 val formatter = DateTimeFormatter.ofPattern("HH:mm:ss")
                 val time = LocalTime.parse(model.content_watch_length, formatter)
                 val milliseconds = time.toSecondOfDay() * 1000L
                 println("Milliseconds: $milliseconds")
                 exoPlayer.seekTo(milliseconds)
-            }else{
+            } else {
                 exoPlayer.seekTo(0)
 
             }
@@ -189,12 +205,46 @@ class VideoAdapter(var viewPager2: ViewPager2,
             iv_vdo_ply_bookmark.setOnClickListener {
                 videoPreparedListener.onBookmarkClick()
             }
-            /*//suman 17-07-2024
+
+            /*itemView.stylplayerView.setOnClickListener {
+                if (is_portraitTouched == true) {
+                    (context as DashboardActivity).toggleToolbar()
+                }
+            }*/
+
+            exo_fullscreen.setOnClickListener {
+                try {
+                    if (is_portraitTouched == false) {
+                        is_portraitTouched = true
+                        exo_fullscreen.setBackgroundResource(R.drawable.full_screenfff);
+                        (context as Activity).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                        //ContextThemeWrapper(context, R.style.AppTheme_NoStatusBar)
+                        (context as DashboardActivity).hideToolbar()
+                        //(context as DashboardActivity).statusColorLandScape()
+                        // hide status bar
+                        context.getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+                    } else {
+                        exo_fullscreen.setBackgroundResource(R.drawable.switch_to_full_screen_button);
+                        (context as Activity).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                        is_portraitTouched = false
+                        //(context as DashboardActivity).showToolbar()
+                        (context as DashboardActivity).showToolbar()
+
+                        // Show status bar
+                        context.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                        (context as DashboardActivity).statusColorPortrait()
+
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+                /*//suman 17-07-2024
             ll_vdo_ply_cmmnt.setOnClickListener {
                 listner.onCommentCLick(videos[absoluteAdapterPosition])
             }*/
+            }
         }
-
+        
         fun setGIF() {
             itemView.progress_wheel.stopSpinning()
             itemView.iv_list_video.visibility = View.GONE
@@ -223,7 +273,9 @@ class VideoAdapter(var viewPager2: ViewPager2,
 
             itemView.progress_wheel.stopSpinning()
             println("tag_vodeo_position_state pos : $adapterPosition")
-            exoPlayer = ExoPlayer.Builder(context)
+            // Initialize ExoPlayer with a track selector
+            val trackSelector = DefaultTrackSelector(context)
+            exoPlayer = ExoPlayer.Builder(context).setTrackSelector(trackSelector)
                 .setRenderersFactory(
                     DefaultRenderersFactory(context).setEnableDecoderFallback(
                         true
@@ -231,7 +283,33 @@ class VideoAdapter(var viewPager2: ViewPager2,
                 ).setSeekForwardIncrementMs(10000L)
                 .setSeekBackIncrementMs(10000L).build()
 
+            // Set parameters for the track selector
+            val parametersBuilder = trackSelector.parameters.buildUpon()
+
+            // For example, set the maximum video bitrate to 500000 (500 kbps)
+            parametersBuilder.setMaxVideoBitrate(500_000)
+
+            // Apply the parameters to the track selector
+            trackSelector.setParameters(parametersBuilder)
+
+
             exoPlayer.addListener(object : Player.Listener {
+
+                /*override fun onVideoSizeChanged(videoSize: VideoSize) {
+                    super.onVideoSizeChanged(videoSize)
+
+                    // Check if the video is in portrait or landscape mode
+                    val videoWidth = videoSize.width
+                    val videoHeight = videoSize.height
+                    if (videoHeight >= videoWidth) {
+                        // If height is greater than width, it’s portrait
+                        (context as Activity).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
+                    } else {
+                        // If width is greater, it's landscape
+                        (context as Activity).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+                    }
+                }*/
+
                 override fun onPlayerError(error: PlaybackException) {
                     super.onPlayerError(error)
                     Toast.makeText(context, "Can't play this video", Toast.LENGTH_SHORT).show()
@@ -239,7 +317,6 @@ class VideoAdapter(var viewPager2: ViewPager2,
 
                 @SuppressLint("SuspiciousIndentation")
                 override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-
 
                     /*if (playbackState == PlaybackStateCompat.STATE_FAST_FORWARDING) {
                         seek_dragging = true
@@ -261,6 +338,11 @@ class VideoAdapter(var viewPager2: ViewPager2,
                     } else {
                         video_watch_completed = false
                     }
+
+                    if (percentageWatched.toInt() > 100){
+                        percentageWatched =100
+                    }
+
                     println("tag_percentageWatched_after  $video_watch_completed")
 
                     if (playWhenReady && playbackState == Player.STATE_READY) {
@@ -280,7 +362,7 @@ class VideoAdapter(var viewPager2: ViewPager2,
                         )
                     }
 
-                    if (duration >0 && position_ >0 && playbackState!=Player.STATE_BUFFERING){
+                    if (duration >=0 && position_ >=0 /*&& playbackState!=Player.STATE_BUFFERING*/){
 
 
                         println("currentDateandTime"+AppUtils.getCurrentDateyymmdd())
@@ -292,7 +374,7 @@ class VideoAdapter(var viewPager2: ViewPager2,
                             topic_id.toInt(),
                             topic_name,
                             videos.get(position).content_id.toInt(),
-                            videos.get(position).like_flag,
+                            /*videos.get(position).like_flag*/like_flag,
                             0,
                             0,
                             DurationFormatUtils.formatDuration(duration, "HH:mm:ss"),
@@ -323,6 +405,10 @@ class VideoAdapter(var viewPager2: ViewPager2,
                     when (playbackState) {
 
                         Player.STATE_ENDED -> {
+
+                            Pref.content_watch_count = Pref.content_watch_count+1
+
+                            listner.onEndofVidForCountUpdate()
                             println("tag_video_position_state  state ended ")
 
                             endTime = System.currentTimeMillis()
@@ -398,7 +484,10 @@ class VideoAdapter(var viewPager2: ViewPager2,
                         }
 
 
-                        Pref.content_watch_count = Pref.content_watch_count+1
+                        //Pref.content_watch_count = Pref.content_watch_count+1
+
+                        //listner.onEndofVidForCountUpdate()
+
                         // viewPager2.setUserInputEnabled(true);
 
                         //viewPager2.setCurrentItem(viewPager2.currentItem + 1, true)
@@ -608,11 +697,18 @@ class VideoAdapter(var viewPager2: ViewPager2,
        // popup_title.setText("Congratulation"/*+Pref.user_name*/)
         var typeFace: Typeface? = ResourcesCompat.getFont(context, R.font.remachinescript_personal_use)
        // popup_title.setTypeface(typeFace)
-        popup_message.setText("You got $content_watch_point points")
+        popup_message.setText("+$content_watch_point")
 
        // close_button.setOnClickListener {
 
       //  }
+
+        println("tag_animate anim")
+        val a: Animation = AnimationUtils.loadAnimation(context, com.breezefieldsalesnexara.R.anim.scale)
+        a.reset()
+        popup_message.clearAnimation()
+        popup_message.startAnimation(a)
+
         popup_image.visibility =View.VISIBLE
         popupWindow.setBackgroundDrawable(ColorDrawable())
         popupWindow.isOutsideTouchable = false
@@ -676,6 +772,7 @@ class VideoAdapter(var viewPager2: ViewPager2,
         fun onQuestionAnswerSetPageLoad(obj: ArrayList<QuestionL>,position:Int)
         fun onLikeClick(isLike:Boolean)
         fun onBookmarkClick()
+        fun onEndofVidForCountUpdate()
     }
     interface OnLastVideoCompleteListener {
         fun onLastVideoComplete()

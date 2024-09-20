@@ -1,6 +1,8 @@
 package com.breezefieldsalesnexara.features.mylearning
 
+import android.app.Activity
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.graphics.PorterDuff
 import android.graphics.Typeface
 import android.graphics.drawable.ColorDrawable
@@ -21,6 +23,8 @@ import com.breezefieldsalesnexara.R
 import com.breezefieldsalesnexara.base.presentation.BaseFragment
 import com.breezefieldsalesnexara.features.dashboard.presentation.DashboardActivity
 import android.os.Handler
+import android.view.animation.Animation
+import android.view.animation.AnimationUtils
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.cardview.widget.CardView
@@ -112,6 +116,7 @@ class LmsQuestionAnswerSet : BaseFragment() , View.OnClickListener {
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater!!.inflate(R.layout.fragment_lms_question_answer_set, container, false)
+        (mContext as Activity).setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT)
         initView(view)
         return view
     }
@@ -560,11 +565,12 @@ class LmsQuestionAnswerSet : BaseFragment() , View.OnClickListener {
         val popup_title: TextView = popupView.findViewById(R.id.popup_title)
         val popup_message: TextView = popupView.findViewById(R.id.popup_message)
         val popup_message_ans: TextView = popupView.findViewById(R.id.popup_message_ans)
-        popup_title.setText("Oops!")
+        //popup_title.setText("Oops!")
         var typeFace: Typeface? = ResourcesCompat.getFont(requireContext(), R.font.remachinescript_personal_use)
         popup_title.setTypeface(typeFace)
-        popup_message.setText("You get $pointsListval points. Correct answer is : ")
-        popup_message_ans.text = correctAns
+        //popup_message.setText("You get $pointsListval points.")
+        //popup_message.setText("Wrong Answer")
+        popup_message_ans.text = "Correct answer is : "+correctAns
         close_button.setOnClickListener {
             processloadQuestionAns()
             progress_wheel.spin()
@@ -582,7 +588,7 @@ class LmsQuestionAnswerSet : BaseFragment() , View.OnClickListener {
 
     private fun showPopup( pointsListval: Int) {
         val inflater: LayoutInflater = mContext.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-        val popupView: View = inflater.inflate(R.layout.popup_layout_congratulation, null)
+        val popupView: View = inflater.inflate(R.layout.popup_layout_correct_ans, null)
         popupWindow = PopupWindow(
             popupView,
             LinearLayout.LayoutParams.MATCH_PARENT,
@@ -597,6 +603,16 @@ class LmsQuestionAnswerSet : BaseFragment() , View.OnClickListener {
         var typeFace: Typeface? = ResourcesCompat.getFont(requireContext(), R.font.remachinescript_personal_use)
         popup_title.setTypeface(typeFace)
         popup_message.setText("You get $pointsListval points")
+
+        popup_title.visibility = View.GONE
+        popup_message.setText("+$pointsListval")
+
+        println("tag_animate anim")
+        val a: Animation = AnimationUtils.loadAnimation(mContext, com.breezefieldsalesnexara.R.anim.scale)
+        a.reset()
+        popup_message.clearAnimation()
+        popup_message.startAnimation(a)
+
         close_button.setOnClickListener {
 
             processloadQuestionAns()

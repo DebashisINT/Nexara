@@ -3,7 +3,7 @@ package com.breezefieldsalesnexara.features.mylearning
 import com.breezefieldsalesnexara.app.domain.LMSNotiEntity
 import com.breezefieldsalesnexara.base.BaseResponse
 
-data class LmsSearchData(val searchid: String,val courseName: String, var video_count: Int = 0,val topic_parcentage: Int =0, var isSelected: Boolean = false, )
+data class LmsSearchData(val searchid: String,val courseName: String, var video_count: Int = 0,var topic_parcentage: Int =0, var isSelected: Boolean = false, )
 data class HeaderItem(val headerText: String, val valueItems: List<ValueItem>)
 data class ValueItem(val valueHeader: String, val valueText: String, val imageResId: Int)
 

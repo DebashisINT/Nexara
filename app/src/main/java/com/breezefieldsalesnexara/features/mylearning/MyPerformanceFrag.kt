@@ -1,6 +1,8 @@
 package com.breezefieldsalesnexara.features.mylearning
 
+import android.app.Activity
 import android.content.Context
+import android.content.pm.ActivityInfo
 import android.graphics.Typeface
 import android.os.Bundle
 import android.os.Handler
@@ -77,6 +79,7 @@ class MyPerformanceFrag : BaseFragment(), View.OnClickListener {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater!!.inflate(R.layout.fragment_my_performance, container, false)
+        (mContext as Activity).requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         initview(view)
 
         if (AppUtils.isOnline(mContext)) {
@@ -280,13 +283,14 @@ class MyPerformanceFrag : BaseFragment(), View.OnClickListener {
 
 
 
-        iv_lms_performance.setImageResource(R.drawable.performance_colored)
-        iv_lms_mylearning.setImageResource(R.drawable.my_learning_new)
-        iv_lms_leaderboard.setImageResource(R.drawable.leaderboard_new)
-        iv_lms_knowledgehub.setImageResource(R.drawable.knowledge_hub_new)
-        iv_lms_leaderboard.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
-        iv_lms_mylearning.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
-        iv_lms_knowledgehub.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_performance.setImageResource(R.drawable.performance_colored)
+        //iv_lms_performance.setColorFilter(ContextCompat.getColor(mContext, R.color.toolbar_lms), android.graphics.PorterDuff.Mode.MULTIPLY)
+        iv_lms_performance.setImageResource(R.drawable.performance_insights_checked)
+        iv_lms_mylearning.setImageResource(R.drawable.open_book_lms_)
+        iv_lms_knowledgehub.setImageResource(R.drawable.set_of_books_lms)
+        //iv_lms_leaderboard.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_mylearning.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_knowledgehub.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
 
         tv_lms_performance.setTextColor(getResources().getColor(R.color.toolbar_lms))
         tv_lms_mylearning.setTextColor(getResources().getColor(R.color.black))
@@ -481,7 +485,7 @@ class MyPerformanceFrag : BaseFragment(), View.OnClickListener {
         when(p0?.id) {
             ll_lms_mylearning.id -> {
                 (mContext as DashboardActivity).loadFragment(
-                    FragType.MyLearningTopicList,
+                    FragType.SearchLmsFrag,
                     true,
                     ""
                 )
@@ -500,7 +504,7 @@ class MyPerformanceFrag : BaseFragment(), View.OnClickListener {
             }
 
             ll_lms_performance.id -> {
-                (mContext as DashboardActivity).loadFragment(FragType.MyPerformanceFrag, true, "")
+                (mContext as DashboardActivity).loadFragment(FragType.PerformanceInsightPage, true, "")
 
             }
 

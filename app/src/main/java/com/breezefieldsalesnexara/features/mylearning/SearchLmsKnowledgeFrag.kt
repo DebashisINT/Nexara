@@ -1,8 +1,10 @@
 package com.breezefieldsalesnexara.features.mylearning
 
+import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.speech.RecognizerIntent
 import android.text.Editable
@@ -74,6 +76,7 @@ class SearchLmsKnowledgeFrag : BaseFragment() , View.OnClickListener, LmsSearchA
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val view = inflater!!.inflate(R.layout.fragment_search_lms, container, false)
+        (context as Activity).requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         initView(view)
         return view
     }
@@ -110,13 +113,14 @@ class SearchLmsKnowledgeFrag : BaseFragment() , View.OnClickListener, LmsSearchA
         iv_lms_knowledgehub=view.findViewById(R.id.iv_lms_knowledgehub)
         tv_lms_knowledgehub=view.findViewById(R.id.tv_lms_knowledgehub)
 
-        iv_lms_knowledgehub.setImageResource(R.drawable.all_topic_colored)
-        iv_lms_performance.setImageResource(R.drawable.performance_black)
-        iv_lms_mylearning.setImageResource(R.drawable.my_learning_black)
-        iv_lms_leaderboard.setImageResource(R.drawable.leaderboard_new)
-        iv_lms_performance.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
-        iv_lms_mylearning.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
-        iv_lms_leaderboard.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_knowledgehub.setImageResource(R.drawable.all_topic_colored)
+        iv_lms_performance.setImageResource(R.drawable.performance_insights)
+        iv_lms_mylearning.setImageResource(R.drawable.open_book_lms_)
+        iv_lms_knowledgehub.setImageResource(R.drawable.all_topics_selected)
+
+        //iv_lms_performance.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_mylearning.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
+        //iv_lms_leaderboard.setColorFilter(ContextCompat.getColor(mContext, R.color.black), android.graphics.PorterDuff.Mode.MULTIPLY)
 
         tv_lms_performance.setTextColor(getResources().getColor(R.color.black))
         tv_lms_mylearning.setTextColor(getResources().getColor(R.color.black))
@@ -238,11 +242,11 @@ class SearchLmsKnowledgeFrag : BaseFragment() , View.OnClickListener, LmsSearchA
                             setTopicAdapter(courseList)
 
                         } else {
-
+                            progress_wheel.stopSpinning()
                             (mContext as DashboardActivity).showSnackMessage(getString(R.string.no_data_found))
                         }
                     }, { error ->
-
+                        progress_wheel.stopSpinning()
                         (mContext as DashboardActivity).showSnackMessage(getString(R.string.something_went_wrong))
                     })
             )
@@ -255,6 +259,7 @@ class SearchLmsKnowledgeFrag : BaseFragment() , View.OnClickListener, LmsSearchA
     }
 
     fun setTopicAdapter(list:List<LmsSearchData>) {
+        progress_wheel.stopSpinning()
         gv_search.visibility =View.VISIBLE
         val layoutManager = FlexboxLayoutManager(mContext)
         layoutManager.flexDirection = FlexDirection.COLUMN
@@ -292,15 +297,17 @@ class SearchLmsKnowledgeFrag : BaseFragment() , View.OnClickListener, LmsSearchA
             VideoPlayLMS.previousFrag = FragType.SearchLmsFrag.toString()
             VideoPlayLMS.loadedFrom = "SearchLmsKnowledgeFrag"
             Pref.videoCompleteCount = "0"
-            (mContext as DashboardActivity).loadFragment(FragType.VideoPlayLMS, true, selectedItem.searchid+"~"+selectedItem.courseName)
-        }    }
+            //(mContext as DashboardActivity).loadFragment(FragType.VideoPlayLMS, true, selectedItem.searchid+"~"+selectedItem.courseName)
+            (mContext as DashboardActivity).loadFragment(FragType.AllTopicsWiseContents, true, selectedItem.searchid+"~"+selectedItem.courseName)
+        }
+    }
 
     override fun onClick(p0: View?) {
 
         when (p0?.id) {
             ll_lms_mylearning.id -> {
                 (mContext as DashboardActivity).loadFragment(
-                    FragType.MyLearningTopicList,
+                    FragType.SearchLmsFrag,
                     true,
                     ""
                 )
@@ -319,7 +326,7 @@ class SearchLmsKnowledgeFrag : BaseFragment() , View.OnClickListener, LmsSearchA
             }
 
             ll_lms_performance.id -> {
-                (mContext as DashboardActivity).loadFragment(FragType.MyPerformanceFrag, true, "")
+                (mContext as DashboardActivity).loadFragment(FragType.PerformanceInsightPage, true, "")
             }
 
             ll_search.id -> {
